@@ -1,0 +1,36 @@
+import csv
+import requests
+from bs4 import BeautifulSoup
+
+def get_movies(url):
+    movies_list = []
+    while True:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        movies = soup.find_all('div', class_='lister-item mode-advanced')
+
+        for movies in movies:
+            name = movie.h3.a.text
+            genre = movie.find('span', class_='genre').text.strip() if movie.find('span', class_='genre') else 'Unknown'
+            movies_list.append([name, genre])
+
+        # Find the link to the next page
+        next_link = soup.find('a', text='Next »')
+        if next_link:
+            url = "https://www.imdb.com" + next_link['href']
+        else:
+            break
+
+    return movies_list
+
+#Initial URL
+url = "https://www.imdb.com/search/title/?year=2004&title_type=feature"
+movies_list = get_movies(url)
+
+#Write data to CSV file
+with open('movies_2004.csv', 'w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Movie', 'Genre']) # Write header
+    writer.writerows(movies_list) #Write data
+
+print("CSV file has been generated.")
